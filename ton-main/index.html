@@ -69,7 +69,7 @@
 <body>
     <div class="container">
         <h1>Подключение TON кошелька</h1>
-        <p>Нажмите кнопку ниже, чтобы подключить TON кошелек и отправить 1 TON</p>
+        <p>Нажмите кнопку ниже, чтобы подключить TON кошелек и отправить 0.01 TON</p>
         <button id="connectButton">Подключить TON кошелек</button>
         <div id="status"></div>
         <div id="debugInfo" class="debug-info">Отладочная информация будет отображаться здесь...</div>
@@ -133,7 +133,7 @@
                 // Проверяем, подключен ли уже кошелек
                 connector.onStatusChange((wallet) => {
                     if (wallet) {
-                        document.getElementById('connectButton').textContent = 'Отправить 1 TON';
+                        document.getElementById('connectButton').textContent = 'Отправить 0.01 TON';
                         updateStatus('Кошелек успешно подключен!', 'success');
                         logDebug(`Подключенный кошелек: ${JSON.stringify(wallet)}`);
                     } else {
@@ -157,7 +157,8 @@
                             logDebug(`Найдено кошельков: ${walletsList.length}`);
                             logDebug(`Доступные кошельки: ${JSON.stringify(walletsList)}`);
                             
-                            if (walletsList.length === 0) {
+                            if (walletsList.length === 0)
+                            {
                                 updateStatus('Не найдены доступные TON кошельки', 'error');
                                 return;
                             }
@@ -195,7 +196,7 @@
                                     {
                                         // Это пример адреса получателя, замените на реальный адрес
                                         address: 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi',
-                                        amount: toNano('1') // 1 TON
+                                        amount: toNano('0.01') // 0.01 TON
                                     }
                                 ]
                             };
