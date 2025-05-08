@@ -64,6 +64,55 @@
             overflow-y: auto;
             display: block;
         }
+
+        /* Стили для модального окна выбора кошелька */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .wallet-option {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .wallet-option:hover {
+            background-color: #eee;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +124,17 @@
         <div id="debugInfo" class="debug-info">Отладочная информация будет отображаться здесь...</div>
     </div>
 
+    <!-- Модальное окно для выбора кошелька -->
+    <div id="walletModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Выберите TON кошелек:</h2>
+            <div id="walletList">
+                <!-- Здесь будут добавлены варианты кошельков -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // Функция для логирования отладочной информации
         function logDebug(message) {
@@ -82,11 +142,11 @@
             const timestamp = new Date().toLocaleTimeString();
             debugInfoElement.textContent += `[${timestamp}] ${message}\n`;
             console.log(message);
-            
+
             // Автоматическая прокрутка вниз
             debugInfoElement.scrollTop = debugInfoElement.scrollHeight;
         }
-        
+
         // Функция для обновления статуса
         function updateStatus(message, type) {
             const statusElement = document.getElementById('status');
@@ -96,17 +156,17 @@
                 statusElement.classList.add(type);
             }
         }
-        
+
         // Функция для конвертации TON в наноTON (1 TON = 10^9 наноTON)
         function toNano(amount) {
             // Преобразуем строку в число, умножаем на 10^9 и возвращаем строку
             return (parseFloat(amount) * 1000000000).toString();
         }
-        
+
         // Основная функция
         document.addEventListener('DOMContentLoaded', () => {
             logDebug('Страница загружена');
-            
+
             // Проверяем, загружена ли библиотека
             if (typeof TonConnectSDK === 'undefined') {
                 logDebug('Ошибка: TonConnectSDK не определен. Библиотека не загружена.');
@@ -116,25 +176,25 @@
             }
 
             logDebug('Библиотека TonConnectSDK успешно загружена!');
-            
+
             // Создаем экземпляр коннектора
             try {
                 // Используем ваш манифест
                 const manifestUrl = 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json';
                 logDebug(`Инициализация TON Connect с манифестом: ${manifestUrl}`);
-                
+
                 const connector = new TonConnectSDK.TonConnect({
                     manifestUrl: manifestUrl
                 });
-                
+
                 logDebug('Коннектор успешно создан');
                 updateStatus('TON Connect успешно инициализирован', 'success');
-                
+
                 // Проверяем, подключен ли уже кошелек
                 connector.onStatusChange((wallet) => {
                     if (wallet) {
                         document.getElementById('connectButton').textContent = 'Отправить 0.01 TON';
-                        updateStatus('Кошелек успешно подключен!', 'success');
+                        update Status('Кошелек успешно подключен!', 'success');
                         logDebug(`Подключенный кошелек: ${JSON.stringify(wallet)}`);
                     } else {
                         document.getElementById('connectButton').textContent = 'Подключить TON кошелек';
@@ -142,7 +202,7 @@
                         logDebug('Кошелек отключен');
                     }
                 });
-                
+
                 // Обработка нажатия кнопки
                 document.getElementById('connectButton').addEventListener('click', async () => {
                     try {
@@ -150,59 +210,67 @@
                             // Если не подключен, инициируем подключение
                             updateStatus('Подключение к кошельку...', 'info');
                             logDebug('Запрос на подключение кошелька...');
-                            
+
                             // Получаем доступные кошельки
                             logDebug('Запрос списка доступных кошельков...');
                             const walletsList = await connector.getWallets();
                             logDebug(`Найдено кошельков: ${walletsList.length}`);
                             logDebug(`Доступные кошельки: ${JSON.stringify(walletsList)}`);
-                            
-                            if (walletsList.length === 0)
-                            {
+
+                            if (walletsList.length === 0) {
                                 updateStatus('Не найдены доступные TON кошельки', 'error');
                                 return;
                             }
-                            
-                            // Выбираем первый доступный кошелек
-                            const selectedWallet = walletsList[0];
-                            logDebug(`Выбран кошелек: ${selectedWallet.name}`);
-                            
-                            // Подключаемся к кошельку
-                            logDebug('Создание ссылки для подключения...');
-                            const universalLink = connector.connect({
-                                universalLink: selectedWallet.universalLink,
-                                bridgeUrl: selectedWallet.bridgeUrl
+
+                            // Отображаем модальное окно с вариантами кошельков
+                            const walletModal = document.getElementById('walletModal');
+                            const walletListContainer = document.getElementById('walletList');
+                            walletListContainer.innerHTML = ''; // Очищаем предыдущие варианты
+
+                            walletsList.forEach(wallet => {
+                                const walletOption = document.createElement('div');
+                                walletOption.classList.add('wallet-option');
+                                walletOption.textContent = wallet.name;
+                                walletOption.addEventListener('click', () => {
+                                    // Подключаемся к выбранному кошельку
+                                    connectToWallet(wallet);
+                                    walletModal.style.display = "none";
+                                });
+                                walletListContainer.appendChild(walletOption);
                             });
-                            
-                            logDebug(`Ссылка для подключения: ${universalLink}`);
-                            
-                            if (universalLink) {
-                                // Открываем ссылку для подключения кошелька
-                                window.open(universalLink, '_blank');
-                                updateStatus('Открыт запрос на подключение кошелька. Подтвердите в приложении.', 'info');
-                            } else {
-                                updateStatus('Не удалось создать ссылку для подключения', 'error');
-                                logDebug('Ошибка: universalLink не сгенерирована');
+
+                            walletModal.style.display = "block";
+
+                            // Обработчик закрытия модального окна
+                            const closeButton = document.querySelector(".close");
+                            closeButton.onclick = function() {
+                                walletModal.style.display = "none";
                             }
+
+                            window.onclick = function(event) {
+                                if (event.target == walletModal) {
+                                    walletModal.style.display = "none";
+                                }
+                            }
+                            
                         } else {
                             // Если уже подключен, отправляем транзакцию
                             updateStatus('Подготовка транзакции...', 'info');
                             logDebug('Подготовка транзакции...');
-                            
+
                             // Создаем транзакцию
                             const transaction = {
                                 validUntil: Math.floor(Date.now() / 1000) + 600, // 10 минут от текущего времени
                                 messages: [
                                     {
-                                        // Это пример адреса получателя, замените на реальный адрес
-                                        address: 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi',
+                                        // Это пример адреса получателя, замените на реальный адрес address: 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi',
                                         amount: toNano('0.001') // 0.01 TON
                                     }
                                 ]
                             };
-                            
+
                             logDebug(`Данные транзакции: ${JSON.stringify(transaction)}`);
-                            
+
                             // Отправляем транзакцию
                             try {
                                 const result = await connector.sendTransaction(transaction);
@@ -219,7 +287,30 @@
                         console.error(error);
                     }
                 });
-                
+
+                // Функция для подключения к выбранному кошельку
+                async function connectToWallet(selectedWallet) {
+                    logDebug(`Выбран кошелек: ${selectedWallet.name}`);
+
+                    // Подключаемся к кошельку
+                    logDebug('Создание ссылки для подключения...');
+                    const universalLink = connector.connect({
+                        universalLink: selectedWallet.universalLink,
+                        bridgeUrl: selectedWallet.bridgeUrl
+                    });
+
+                    logDebug(`Ссылка для подключения: ${universalLink}`);
+
+                    if (universalLink) {
+                        // Открываем ссылку для подключения кошелька
+                        window.open(universalLink, '_blank');
+                        updateStatus('Открыт запрос на подключение кошелька. Подтвердите в приложении.', 'info');
+                    } else {
+                        updateStatus('Не удалось создать ссылку для подключения', 'error');
+                        logDebug('Ошибка: universalLink не сгенерирована');
+                    }
+                }
+
                 // Проверяем состояние подключения при загрузке
                 logDebug('Проверка состояния подключения...');
                 const currentWallet = connector.wallet;
@@ -228,7 +319,7 @@
                 } else {
                     logDebug('Кошелек не подключен');
                 }
-                
+
             } catch (error) {
                 logDebug(`Ошибка при инициализации TON Connect: ${error.message}`);
                 updateStatus(`Ошибка инициализации: ${error.message}`, 'error');
