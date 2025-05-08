@@ -101,7 +101,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             logDebug('Страница загружена');
             
-            // Провер��ем, загружена ли библиотека
+            // Проверяем, загружена ли библиотека
             // Изменить проверку библиотеки с TonConnect на TonConnectSDK
             if (typeof TonConnectSDK === 'undefined') {
                 logDebug('Ошибка: TonConnectSDK не определен. Библиотека не загружена.');
@@ -190,7 +190,7 @@
                                     {
                                         // Это пример адреса получателя, замените на реальный адрес
                                         address: 'UQDEPdThMYPOjtwAZG9LKzaXmNtfrr1EdVlzA5dYgNQg0FSF',
-                                        amount: TonConnect.toNano('1') // 1 TON
+                                        amount: TonConnectSDK.toNano('1') // 1 TON
                                     }
                                 ]
                             };
