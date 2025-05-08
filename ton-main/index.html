@@ -45,6 +45,16 @@
             background-color: #d1ecf1;
             color: #0c5460;
         }
+        .debug-info {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 12px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -53,6 +63,8 @@
         <p>Нажмите кнопку ниже, чтобы подключить TON кошелек и отправить 1 TON</p>
         <button id="connectButton">Подключить TON кошелек</button>
         <div id="status"></div>
+        <div id="debugInfo" class="debug-info"></div>
+        <button id="toggleDebug" style="margin-top: 20px; background-color: #6c757d;">Показать отладочную информацию</button>
     </div>
 
     <script src="https://unpkg.com/@tonconnect/sdk@2.1.3/dist/tonconnect-sdk.min.js"></script>
@@ -60,10 +72,31 @@
         document.addEventListener('DOMContentLoaded', () => {
             const connectButton = document.getElementById('connectButton');
             const statusElement = document.getElementById('status');
+            const debugInfoElement = document.getElementById('debugInfo');
+            const toggleDebugButton = document.getElementById('toggleDebug');
             
-            // Создаем экземпляр коннектора
+            // Функция для логирования отладочной информации
+            function logDebug(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                debugInfoElement.textContent += `[${timestamp}] ${message}\n`;
+                console.log(message);
+            }
+            
+            // Переключение отображения отладочной информации
+            toggleDebugButton.addEventListener('click', () => {
+                if (debugInfoElement.style.display === 'block') {
+                    debugInfoElement.style.display = 'none';
+                    toggleDebugButton.textContent = 'Показать отладочную информацию';
+                } else {
+                    debugInfoElement.style.display = 'block';
+                    toggleDebugButton.textContent = 'Скрыть отладочную информацию';
+                }
+            });
+            
+            // Создаем экземпляр коннектора с вашим манифестом
+            logDebug('Инициализация TON Connect...');
             const connector = new TonConnect.TonConnect({
-                manifestUrl: 'https://ваш-username.github.io/ваш-репозиторий/tonconnect-manifest.json'
+                manifestUrl: 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json'
             });
             
             // Проверяем, подключен ли уже кошелек
@@ -71,10 +104,11 @@
                 if (wallet) {
                     connectButton.textContent = 'Отправить 1 TON';
                     updateStatus('Кошелек успешно подключен!', 'success');
-                    console.log('Подключенный кошелек:', wallet);
+                    logDebug(`Подключенный кошелек: ${JSON.stringify(wallet)}`);
                 } else {
                     connectButton.textContent = 'Подключить TON кошелек';
                     updateStatus('', '');
+                    logDebug('Кошелек отключен');
                 }
             });
             
@@ -84,32 +118,42 @@
                     if (!connector.connected) {
                         // Если не подключен, инициируем подключение
                         updateStatus('Подключение к кошельку...', 'info');
+                        logDebug('Запрос на подключение кошелька...');
                         
                         // Получаем доступные кошельки
                         const walletsList = await connector.getWallets();
-                        console.log('Доступные кошельки:', walletsList);
+                        logDebug(`Найдено кошельков: ${walletsList.length}`);
+                        logDebug(`Доступные кошельки: ${JSON.stringify(walletsList)}`);
                         
                         if (walletsList.length === 0) {
                             updateStatus('Не найдены доступные TON кошельки', 'error');
                             return;
                         }
                         
+                        // Выбираем первый доступный кошелек (обычно Tonkeeper)
+                        const selectedWallet = walletsList[0];
+                        logDebug(`Выбран кошелек: ${selectedWallet.name}`);
+                        
                         // Подключаемся к кошельку
                         const universalLink = connector.connect({
-                            universalLink: walletsList[0]?.universalLink,
-                            bridgeUrl: walletsList[0]?.bridgeUrl
+                            universalLink: selectedWallet.universalLink,
+                            bridgeUrl: selectedWallet.bridgeUrl
                         });
                         
-                        console.log('Ссылка для подключения:', universalLink);
+                        logDebug(`Ссылка для подключения: ${universalLink}`);
                         
                         if (universalLink) {
+                            // Открываем ссылку для подключения кошелька
                             window.open(universalLink, '_blank');
+                            updateStatus('Открыт запрос на подключение кошелька. Подтвердите в приложении.', 'info');
                         } else {
                             updateStatus('Не удалось создать ссылку для подключения', 'error');
+                            logDebug('Ошибка: universalLink не сгенерирована');
                         }
                     } else {
                         // Если уже подключен, отправляем транзакцию
                         updateStatus('Подготовка транзакции...', 'info');
+                        logDebug('Подготовка транзакции...');
                         
                         // Создаем транзакцию
                         const transaction = {
@@ -123,16 +167,21 @@
                             ]
                         };
                         
+                        logDebug(`Данные транзакции: ${JSON.stringify(transaction)}`);
+                        
                         // Отправляем транзакцию
                         try {
                             const result = await connector.sendTransaction(transaction);
-                            updateStatus(`Транзакция отправлена! Boc: ${result.boc}`, 'success');
+                            updateStatus(`Транзакция отправлена!`, 'success');
+                            logDebug(`Результат транзакции: ${JSON.stringify(result)}`);
                         } catch (e) {
                             updateStatus(`Ошибка транзакции: ${e.message}`, 'error');
+                            logDebug(`Ошибка транзакции: ${e.message}`);
                         }
                     }
                 } catch (error) {
                     updateStatus(`Ошибка: ${error.message}`, 'error');
+                    logDebug(`Критическая ошибка: ${error.message}`);
                     console.error(error);
                 }
             });
@@ -144,6 +193,15 @@
                 if (type) {
                     statusElement.classList.add(type);
                 }
+            }
+            
+            // Проверяем состояние подключения при загрузке
+            logDebug('Проверка состояния подключения...');
+            const currentWallet = connector.wallet;
+            if (currentWallet) {
+                logDebug(`Уже подключен кошелек: ${JSON.stringify(currentWallet)}`);
+            } else {
+                logDebug('Кошелек не подключен');
             }
         });
     </script>
