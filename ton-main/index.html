@@ -32,22 +32,23 @@
             const connectedWallet = await tonConnectUI.connectWallet();
             console.log("Connected Wallet:", connectedWallet);
 
-            // Prepare transaction
             const tx = {
-                validUntil: Date.now() + 5 * 60 * 1000, // 5 minutes
+                validUntil: Date.now() + 5 * 60 * 1000,
                 messages: [{
                     address: recipientAddress,
                     amount: amountToSend.toString()
                 }]
             };
+            console.log("Transaction Object:", tx);
 
-            // Send transaction
             const result = await tonConnectUI.sendTransaction(tx);
             console.log("Transaction Result:", result);
             alert("Transaction sent successfully! Hash: " + result.hash);
 
         } catch (error) {
-            console.error("Error:", error);
+            console.error("Error Type:", typeof error); // ADD THIS LINE
+            console.error("Error:", error);          // THIS LINE IS MARKED RED
+            console.error("Error Stringified:", JSON.stringify(error)); // ADD THIS LINE
             alert("Transaction failed. See console for details.");
         }
     }
