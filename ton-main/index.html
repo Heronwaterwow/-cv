@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Выбор TON кошелька</title>
-    <!-- Локальная копия библиотеки TON Connect -->
-    <script src="tonconnect-sdk.min.js"></script>
+    <!-- Подключаем TON Connect SDK с CDN -->
+    <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -27,7 +27,7 @@
             color: #0088CC;
             margin-bottom: 16px;
         }
-        button {
+        .connect-button {
             background-color: #0088CC;
             color: white;
             border: none;
@@ -35,16 +35,34 @@
             font-size: 16px;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
             margin: 5px;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
         }
-        button:hover {
+        .connect-button:hover {
             background-color: #006699;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        button:disabled {
+        .connect-button:active {
+            transform: translateY(0);
+        }
+        .connect-button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .connect-button img {
+            width: 24px;
+            height: 24px;
         }
         #status {
             margin-top: 20px;
@@ -97,6 +115,7 @@
             max-height: 80vh;
             overflow-y: auto;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
         }
         .modal-header {
             margin-bottom: 16px;
@@ -132,6 +151,11 @@
         .wallet-item:hover {
             background-color: #f5f9ff;
             border-color: #0088CC;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        .wallet-item:active {
+            transform: translateY(0);
         }
         .wallet-icon {
             width: 36px;
@@ -144,6 +168,14 @@
             font-weight: 500;
             flex-grow: 1;
         }
+        .wallet-device {
+            font-size: 12px;
+            color: #666;
+            margin-left: auto;
+            background-color: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
         .close-button {
             position: absolute;
             top: 16px;
@@ -153,6 +185,10 @@
             font-size: 24px;
             cursor: pointer;
             color: #666;
+            transition: color 0.2s;
+        }
+        .close-button:hover {
+            color: #333;
         }
         .loading {
             display: flex;
@@ -182,9 +218,20 @@
             background-color: transparent;
             color: #0088CC;
             border: 1px solid #0088CC;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 12px;
+            display: inline-block;
         }
         .disconnect-button:hover {
             background-color: #f0f8ff;
+            transform: translateY(-2px);
+        }
+        .disconnect-button:active {
+            transform: translateY(0);
         }
         /* Стили для иконок статуса */
         .status-icon {
@@ -194,32 +241,75 @@
             margin-right: 8px;
             vertical-align: middle;
         }
-        .status-icon.success {
-            background-color: transparent;
+        /* Стили для карточки подключенного кошелька */
+        .connected-wallet {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: #f5f9ff;
+            border-radius: 8px;
+            margin-top: 16px;
+            border: 1px solid #d1e7ff;
         }
-        .status-icon.error {
-            background-color: transparent;
+        .connected-wallet img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 12px;
         }
-        .status-icon.info {
-            background-color: transparent;
+        .connected-wallet-info {
+            flex-grow: 1;
+            text-align: left;
+        }
+        .connected-wallet-name {
+            font-weight: 500;
+            color: #333;
+        }
+        .connected-wallet-address {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container fade-in">
         <h1>Подключение TON кошелька</h1>
-        <p>Выберите TON кошелек для подключения и отправки транзакций</p>
-        <button id="connectButton">Подключить TON кошелек</button>
+        <p>Выберите TON кошелек для подключения к приложению</p>
+        
+        <button id="connectButton" class="connect-button">
+            <img src="https://ton.org/download/ton_symbol.svg" alt="TON">
+            <span>Подключить кошелек</span>
+        </button>
+        
+        <div id="connectedWalletContainer" style="display: none;" class="connected-wallet">
+            <img id="connectedWalletIcon" src="/placeholder.svg" alt="Wallet">
+            <div class="connected-wallet-info">
+                <div id="connectedWalletName" class="connected-wallet-name"></div>
+                <div id="connectedWalletAddress" class="connected-wallet-address"></div>
+            </div>
+        </div>
+        
         <div id="disconnectButtonContainer" style="display: none;">
             <button id="disconnectButton" class="disconnect-button">Отключить кошелек</button>
         </div>
+        
         <div id="status"></div>
         <div id="debugInfo" class="debug-info">Отладочная информация будет отображаться здесь...</div>
     </div>
 
     <!-- Модальное окно выбора кошелька -->
     <div id="walletModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content fade-in">
             <div class="modal-header">
                 <h2 class="modal-title">Выберите TON кошелек</h2>
                 <p class="modal-description">Выберите кошелек для подключения к приложению</p>
@@ -271,6 +361,13 @@
             return (parseFloat(amount) * 1000000000).toString();
         }
         
+        // Функция для сокращения адреса кошелька
+        function formatAddress(address) {
+            if (!address) return '';
+            if (address.length <= 12) return address;
+            return address.substring(0, 6) + '...' + address.substring(address.length - 6);
+        }
+        
         // Функция для открытия модального окна
         function openModal() {
             document.getElementById('walletModal').style.display = 'flex';
@@ -282,13 +379,13 @@
         }
         
         // Основная функция
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             logDebug('Страница загружена');
             
             // Проверяем, загружена ли библиотека
             if (typeof TonConnectSDK === 'undefined') {
                 logDebug('Ошибка: TonConnectSDK не определен. Библиотека не загружена.');
-                updateStatus('Ошибка: Библиотека TonConnectSDK не загружена. Убедитесь, что файл tonconnect-sdk.min.js находится в той же папке, что и HTML-файл.', 'error');
+                updateStatus('Ошибка: Библиотека TonConnectSDK не загружена.', 'error');
                 document.getElementById('connectButton').disabled = true;
                 return;
             }
@@ -307,10 +404,11 @@
             
             // Создаем экземпляр коннектора
             try {
-                // Используем манифест
-                const manifestUrl = 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json';
+                // Манифест приложения
+                const manifestUrl = 'https://raw.githubusercontent.com/ton-community/ton-connect-manifest/main/tonconnect-manifest.json';
                 logDebug(`Инициализация TON Connect с манифестом: ${manifestUrl}`);
                 
+                // Создаем экземпляр TonConnect
                 const connector = new TonConnectSDK.TonConnect({
                     manifestUrl: manifestUrl
                 });
@@ -318,19 +416,51 @@
                 logDebug('Коннектор успешно создан');
                 updateStatus('TON Connect успешно инициализирован', 'success');
                 
+                // Обновляем информацию о подключенном кошельке
+                function updateConnectedWalletInfo(wallet) {
+                    if (wallet) {
+                        // Обновляем информацию о кошельке
+                        document.getElementById('connectedWalletName').textContent = wallet.name || 'TON Кошелек';
+                        document.getElementById('connectedWalletIcon').src = wallet.imageUrl || 'https://ton.org/download/ton_symbol.svg';
+                        
+                        // Отображаем адрес кошелька, если доступен
+                        const walletAddress = wallet.account?.address || '';
+                        document.getElementById('connectedWalletAddress').textContent = walletAddress ? formatAddress(walletAddress) : '';
+                        
+                        // Показываем контейнер с информацией о кошельке
+                        document.getElementById('connectedWalletContainer').style.display = 'flex';
+                        document.getElementById('disconnectButtonContainer').style.display = 'block';
+                        
+                        // Обновляем текст кнопки
+                        document.getElementById('connectButton').innerHTML = `
+                            <img src="${wallet.imageUrl || 'https://ton.org/download/ton_symbol.svg'}" alt="${wallet.name}">
+                            <span>Отправить 0.001 TON</span>
+                        `;
+                    } else {
+                        // Скрываем информацию о кошельке
+                        document.getElementById('connectedWalletContainer').style.display = 'none';
+                        document.getElementById('disconnectButtonContainer').style.display = 'none';
+                        
+                        // Возвращаем исходный текст кнопки
+                        document.getElementById('connectButton').innerHTML = `
+                            <img src="https://ton.org/download/ton_symbol.svg" alt="TON">
+                            <span>Подключить кошелек</span>
+                        `;
+                    }
+                }
+                
                 // Проверяем, подключен ли уже кошелек
                 connector.onStatusChange((wallet) => {
                     if (wallet) {
-                        document.getElementById('connectButton').textContent = 'Отправить 0.001 TON';
-                        document.getElementById('disconnectButtonContainer').style.display = 'block';
                         updateStatus(`Кошелек ${wallet.name} успешно подключен!`, 'success');
                         logDebug(`Подключенный кошелек: ${JSON.stringify(wallet)}`);
                     } else {
-                        document.getElementById('connectButton').textContent = 'Подключить TON кошелек';
-                        document.getElementById('disconnectButtonContainer').style.display = 'none';
                         updateStatus('', '');
                         logDebug('Кошелек отключен');
                     }
+                    
+                    // Обновляем информацию о кошельке
+                    updateConnectedWalletInfo(wallet);
                 });
                 
                 // Обработка нажатия кнопки подключения/отправки
@@ -359,15 +489,27 @@
                                 `;
                                 updateStatus('Не найдены доступные TON кошельки', 'error');
                             } else {
-                                // Заполняем список кошельков
-                                walletsList.forEach(wallet => {
+                                // Группируем кошельки по типу устройства
+                                const mobileWallets = walletsList.filter(wallet => wallet.platforms.includes('ios') || wallet.platforms.includes('android'));
+                                const browserWallets = walletsList.filter(wallet => wallet.platforms.includes('browser'));
+                                const desktopWallets = walletsList.filter(wallet => wallet.platforms.includes('windows') || wallet.platforms.includes('macos') || wallet.platforms.includes('linux'));
+                                
+                                // Функция для создания элемента кошелька
+                                function createWalletItem(wallet, deviceType) {
                                     const walletItem = document.createElement('div');
                                     walletItem.className = 'wallet-item';
+                                    
+                                    // Определяем текст типа устройства
+                                    let deviceText = '';
+                                    if (deviceType === 'mobile') deviceText = 'Мобильный';
+                                    else if (deviceType === 'browser') deviceText = 'Браузер';
+                                    else if (deviceType === 'desktop') deviceText = 'Десктоп';
                                     
                                     // Создаем HTML для элемента кошелька
                                     walletItem.innerHTML = `
                                         <img src="${wallet.imageUrl || 'https://ton.org/download/ton_symbol.svg'}" alt="${wallet.name}" class="wallet-icon">
                                         <span class="wallet-name">${wallet.name}</span>
+                                        ${deviceText ? `<span class="wallet-device">${deviceText}</span>` : ''}
                                     `;
                                     
                                     // Добавляем обработчик клика для выбора кошелька
@@ -400,8 +542,51 @@
                                         }
                                     });
                                     
-                                    walletListElement.appendChild(walletItem);
-                                });
+                                    return walletItem;
+                                }
+                                
+                                // Добавляем кошельки в список
+                                if (browserWallets.length > 0) {
+                                    const browserHeader = document.createElement('h3');
+                                    browserHeader.textContent = 'Браузерные кошельки';
+                                    browserHeader.style.marginTop = '16px';
+                                    browserHeader.style.marginBottom = '8px';
+                                    browserHeader.style.fontSize = '16px';
+                                    browserHeader.style.color = '#333';
+                                    walletListElement.appendChild(browserHeader);
+                                    
+                                    browserWallets.forEach(wallet => {
+                                        walletListElement.appendChild(createWalletItem(wallet, 'browser'));
+                                    });
+                                }
+                                
+                                if (mobileWallets.length > 0) {
+                                    const mobileHeader = document.createElement('h3');
+                                    mobileHeader.textContent = 'Мобильные кошельки';
+                                    mobileHeader.style.marginTop = '16px';
+                                    mobileHeader.style.marginBottom = '8px';
+                                    mobileHeader.style.fontSize = '16px';
+                                    mobileHeader.style.color = '#333';
+                                    walletListElement.appendChild(mobileHeader);
+                                    
+                                    mobileWallets.forEach(wallet => {
+                                        walletListElement.appendChild(createWalletItem(wallet, 'mobile'));
+                                    });
+                                }
+                                
+                                if (desktopWallets.length > 0) {
+                                    const desktopHeader = document.createElement('h3');
+                                    desktopHeader.textContent = 'Десктопные кошельки';
+                                    desktopHeader.style.marginTop = '16px';
+                                    desktopHeader.style.marginBottom = '8px';
+                                    desktopHeader.style.fontSize = '16px';
+                                    desktopHeader.style.color = '#333';
+                                    walletListElement.appendChild(desktopHeader);
+                                    
+                                    desktopWallets.forEach(wallet => {
+                                        walletListElement.appendChild(createWalletItem(wallet, 'desktop'));
+                                    });
+                                }
                             }
                             
                             // Открываем модальное окно
@@ -460,8 +645,7 @@
                 const currentWallet = connector.wallet;
                 if (currentWallet) {
                     logDebug(`Уже подключен кошелек: ${JSON.stringify(currentWallet)}`);
-                    document.getElementById('disconnectButtonContainer').style.display = 'block';
-                    document.getElementById('connectButton').textContent = 'Отправить 0.001 TON';
+                    updateConnectedWalletInfo(currentWallet);
                 } else {
                     logDebug('Кошелек не подключен');
                 }
