@@ -1,79 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>TON Connect with Console</title>
-<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-<style>
-  #console {
-    width: 500px;
-    height: 200px;
-    border: 1px solid #ccc;
-    overflow-y: scroll;
-    padding: 5px;
-    font-family: monospace;
-  }
-</style>
+    <title>TON Connect Example</title>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
 
-<h1>TON Connect Example with Custom Console</h1>
+<h1>TON Connect Example</h1>
+
+<p>This is a basic example of integrating TON Connect with JavaScript and sending a transaction.</p>
 
 <div id="ton-connect"></div>
 
-<button onclick="connectCustom()">Connect with Custom Button</button>
-
-<div id="console"></div>
+<button onclick="connectCustom()">Connect and Send 0.001 TON</button>
 
 <script>
-  const manifestUrl = 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json';
-  const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: manifestUrl,
-    buttonRootId: 'ton-connect'
-  });
+    // Replace with your actual app URL
+    const manifestUrl = 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json';
+    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: manifestUrl,
+        buttonRootId: 'ton-connect'
+    });
 
-  const recipientAddress = 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi';
-  const amountToSend = 1000000; // 0.001 TON in nanotons
+    // Your wallet address to receive the TON
+    const recipientAddress = 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi';
+    const amountToSend = 10000000; // 0.01 TON in nanotons (1 TON = 10^9 nanotons)
 
-  const consoleDiv = document.getElementById('console');
+    // Connect programmatically function
+    async function connectCustom() {
+        try {
+            const connectedWallet = await tonConnectUI.connectWallet();
+            console.log("Connected Wallet:", connectedWallet);
 
-  function logToConsole(message) {
-    const newLine = document.createElement('div');
-    newLine.textContent = message;
-    consoleDiv.appendChild(newLine);
-    consoleDiv.scrollTop = consoleDiv.scrollHeight; // Автоматическая прокрутка вниз
-  }
+            const tx = {
+                validUntil: Date.now() + 5 * 60 * 1000,
+                messages: [{
+                    address: recipientAddress,
+                    amount: amountToSend.toString()
+                }]
+            };
+            console.log("Transaction Object:", tx);
 
-  async function connectAndSend() {
-    try {
-      logToConsole("Connecting to wallet...");
-      const connectedWallet = await tonConnectUI.connectWallet();
-      logToConsole("Wallet connected:", connectedWallet);
+            const result = await tonConnectUI.sendTransaction(tx);
+            console.log("Transaction Result:", result);
+            alert("Transaction sent successfully! Hash: " + result.hash);
 
-      const tx = {
-        validUntil: Date.now() + 5 * 60 * 1000,
-        messages: [{
-          address: recipientAddress,
-          amount: amountToSend.toString()
-        }]
-      };
-      logToConsole("Transaction object:", tx);
-
-      logToConsole("Sending transaction...");
-      const result = await tonConnectUI.sendTransaction(tx);
-      logToConsole("Transaction successful! Hash:", result.hash);
-      alert("Transaction sent successfully! Hash: " + result.hash);
-
-    } catch (error) {
-      logToConsole("Error Type:", typeof error);
-      logToConsole("Error:", error);
-      logToConsole("Error Stringified:", JSON.stringify(error));
-      alert("Transaction failed. See console for details.");
+        } catch (error) {
+            console.error("Error Type:", typeof error);
+            console.error("Error:", error);
+            console.error("Error Stringified:", JSON.stringify(error));
+            alert("Transaction failed. See console for details. Check console for errors.");
+        }
     }
-  }
-
-  async function connectCustom() {
-    connectAndSend();
-  }
 </script>
 
 </body>
