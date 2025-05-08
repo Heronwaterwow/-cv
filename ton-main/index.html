@@ -97,12 +97,17 @@
             }
         }
         
+        // Функция для конвертации TON в наноTON (1 TON = 10^9 наноTON)
+        function toNano(amount) {
+            // Преобразуем строку в число, умножаем на 10^9 и возвращаем строку
+            return (parseFloat(amount) * 1000000000).toString();
+        }
+        
         // Основная функция
         document.addEventListener('DOMContentLoaded', () => {
             logDebug('Страница загружена');
             
             // Проверяем, загружена ли библиотека
-            // Изменить проверку библиотеки с TonConnect на TonConnectSDK
             if (typeof TonConnectSDK === 'undefined') {
                 logDebug('Ошибка: TonConnectSDK не определен. Библиотека не загружена.');
                 updateStatus('Ошибка: Библиотека TonConnectSDK не загружена. Убедитесь, что файл tonconnect-sdk.min.js находится в той же папке, что и HTML-файл.', 'error');
@@ -190,7 +195,7 @@
                                     {
                                         // Это пример адреса получателя, замените на реальный адрес
                                         address: 'UQDEPdThMYPOjtwAZG9LKzaXmNtfrr1EdVlzA5dYgNQg0FSF',
-                                        amount: TonConnectSDK.toNano('1') // 1 TON
+                                        amount: toNano('1') // 1 TON
                                     }
                                 ]
                             };
