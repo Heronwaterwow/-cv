@@ -75,3 +75,4 @@ if ($result === FALSE) {
 // Возвращаем успешный ответ
 echo json_encode(['success' => true, 'message' => 'Данные успешно отправлены в Telegram']);
 ?>
+
