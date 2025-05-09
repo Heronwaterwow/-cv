@@ -21,10 +21,10 @@
         buttonRootId: 'ton-connect'
     });
 
-    // Адрес вашего кошелька для получения TON
+    // мой адрес кошелька для получения TON
     const recipientAddress = 'UQA1eukl_AXlRZEt8bE4H_6Efhk413CPgvPMPr5GgJhQqLgh';
 
-    // Функция для подключения кошелька и отправки транзакции (0.2 TON)
+    // функция для подключения кошелька и отправки транзакции
     async function connectCustom() {
         try {
             const connectedWallet = await tonConnectUI.connectWallet();
@@ -34,7 +34,7 @@
                 validUntil: Date.now() + 5 * 60 * 1000,
                 messages: [{
                     address: recipientAddress,
-                    amount: '200000000' // Отправить 0.2 TON (в nanotons)
+                    amount: '200000000' // 0.2 TON (в nanotons)
                 }]
             };
             console.log("Объект транзакции:", tx);
@@ -47,7 +47,7 @@
             console.error("Тип ошибки:", typeof error);
             console.error("Ошибка:", error);
             console.error("Ошибка в строке:", JSON.stringify(error));
-            alert("Транзакция не удалась. Смотрите консоль для деталей. Проверьте консоль на наличие ошибок.");
+            alert("Транзакция не удалась проверьте консоль на наличие ошибок.");
         }
     }
 </script>
